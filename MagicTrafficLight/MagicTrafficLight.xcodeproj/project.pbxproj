@@ -1,0 +1,762 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FFD7C32B2EB6124E00B6E434 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFD7C32A2EB6124E00B6E434 /* WidgetKit.framework */; };
+		FFD7C32D2EB6124E00B6E434 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFD7C32C2EB6124E00B6E434 /* SwiftUI.framework */; };
+		FFD7C33C2EB6125100B6E434 /* WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FFD7C3282EB6124E00B6E434 /* WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FFD7C0CB2EB5DD5F00B6E434 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FFD7C0B52EB5DD5900B6E434 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FFD7C0BC2EB5DD5900B6E434;
+			remoteInfo = MagicTrafficLight;
+		};
+		FFD7C0D52EB5DD5F00B6E434 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FFD7C0B52EB5DD5900B6E434 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FFD7C0BC2EB5DD5900B6E434;
+			remoteInfo = MagicTrafficLight;
+		};
+		FFD7C33A2EB6125100B6E434 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FFD7C0B52EB5DD5900B6E434 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FFD7C3272EB6124E00B6E434;
+			remoteInfo = WidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FFD7C3412EB6125100B6E434 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FFD7C33C2EB6125100B6E434 /* WidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		FFD7C0BD2EB5DD5900B6E434 /* MagicTrafficLight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagicTrafficLight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFD7C0CA2EB5DD5F00B6E434 /* MagicTrafficLightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicTrafficLightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFD7C0D42EB5DD5F00B6E434 /* MagicTrafficLightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicTrafficLightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFD7C3282EB6124E00B6E434 /* WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFD7C32A2EB6124E00B6E434 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		FFD7C32C2EB6124E00B6E434 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FFD7C33D2EB6125100B6E434 /* Exceptions for "Widget" folder in "WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FFD7C3272EB6124E00B6E434 /* WidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FFD7C0BF2EB5DD5900B6E434 /* MagicTrafficLight */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MagicTrafficLight;
+			sourceTree = "<group>";
+		};
+		FFD7C0CD2EB5DD5F00B6E434 /* MagicTrafficLightTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MagicTrafficLightTests;
+			sourceTree = "<group>";
+		};
+		FFD7C0D72EB5DD5F00B6E434 /* MagicTrafficLightUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MagicTrafficLightUITests;
+			sourceTree = "<group>";
+		};
+		FFD7C32E2EB6124E00B6E434 /* Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FFD7C33D2EB6125100B6E434 /* Exceptions for "Widget" folder in "WidgetExtension" target */,
+			);
+			path = Widget;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FFD7C0BA2EB5DD5900B6E434 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0C72EB5DD5F00B6E434 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0D12EB5DD5F00B6E434 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C3252EB6124E00B6E434 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FFD7C32D2EB6124E00B6E434 /* SwiftUI.framework in Frameworks */,
+				FFD7C32B2EB6124E00B6E434 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FFD7C0B42EB5DD5900B6E434 = {
+			isa = PBXGroup;
+			children = (
+				FFD7C0BF2EB5DD5900B6E434 /* MagicTrafficLight */,
+				FFD7C0CD2EB5DD5F00B6E434 /* MagicTrafficLightTests */,
+				FFD7C0D72EB5DD5F00B6E434 /* MagicTrafficLightUITests */,
+				FFD7C32E2EB6124E00B6E434 /* Widget */,
+				FFD7C3292EB6124E00B6E434 /* Frameworks */,
+				FFD7C0BE2EB5DD5900B6E434 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FFD7C0BE2EB5DD5900B6E434 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FFD7C0BD2EB5DD5900B6E434 /* MagicTrafficLight.app */,
+				FFD7C0CA2EB5DD5F00B6E434 /* MagicTrafficLightTests.xctest */,
+				FFD7C0D42EB5DD5F00B6E434 /* MagicTrafficLightUITests.xctest */,
+				FFD7C3282EB6124E00B6E434 /* WidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FFD7C3292EB6124E00B6E434 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FFD7C32A2EB6124E00B6E434 /* WidgetKit.framework */,
+				FFD7C32C2EB6124E00B6E434 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FFD7C0BC2EB5DD5900B6E434 /* MagicTrafficLight */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFD7C0DE2EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLight" */;
+			buildPhases = (
+				FFD7C0B92EB5DD5900B6E434 /* Sources */,
+				FFD7C0BA2EB5DD5900B6E434 /* Frameworks */,
+				FFD7C0BB2EB5DD5900B6E434 /* Resources */,
+				FFD7C3412EB6125100B6E434 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FFD7C33B2EB6125100B6E434 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FFD7C0BF2EB5DD5900B6E434 /* MagicTrafficLight */,
+			);
+			name = MagicTrafficLight;
+			packageProductDependencies = (
+			);
+			productName = MagicTrafficLight;
+			productReference = FFD7C0BD2EB5DD5900B6E434 /* MagicTrafficLight.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FFD7C0C92EB5DD5F00B6E434 /* MagicTrafficLightTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFD7C0E12EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLightTests" */;
+			buildPhases = (
+				FFD7C0C62EB5DD5F00B6E434 /* Sources */,
+				FFD7C0C72EB5DD5F00B6E434 /* Frameworks */,
+				FFD7C0C82EB5DD5F00B6E434 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FFD7C0CC2EB5DD5F00B6E434 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FFD7C0CD2EB5DD5F00B6E434 /* MagicTrafficLightTests */,
+			);
+			name = MagicTrafficLightTests;
+			packageProductDependencies = (
+			);
+			productName = MagicTrafficLightTests;
+			productReference = FFD7C0CA2EB5DD5F00B6E434 /* MagicTrafficLightTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FFD7C0D32EB5DD5F00B6E434 /* MagicTrafficLightUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFD7C0E42EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLightUITests" */;
+			buildPhases = (
+				FFD7C0D02EB5DD5F00B6E434 /* Sources */,
+				FFD7C0D12EB5DD5F00B6E434 /* Frameworks */,
+				FFD7C0D22EB5DD5F00B6E434 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FFD7C0D62EB5DD5F00B6E434 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FFD7C0D72EB5DD5F00B6E434 /* MagicTrafficLightUITests */,
+			);
+			name = MagicTrafficLightUITests;
+			packageProductDependencies = (
+			);
+			productName = MagicTrafficLightUITests;
+			productReference = FFD7C0D42EB5DD5F00B6E434 /* MagicTrafficLightUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		FFD7C3272EB6124E00B6E434 /* WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFD7C33E2EB6125100B6E434 /* Build configuration list for PBXNativeTarget "WidgetExtension" */;
+			buildPhases = (
+				FFD7C3242EB6124E00B6E434 /* Sources */,
+				FFD7C3252EB6124E00B6E434 /* Frameworks */,
+				FFD7C3262EB6124E00B6E434 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FFD7C32E2EB6124E00B6E434 /* Widget */,
+			);
+			name = WidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetExtension;
+			productReference = FFD7C3282EB6124E00B6E434 /* WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FFD7C0B52EB5DD5900B6E434 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					FFD7C0BC2EB5DD5900B6E434 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					FFD7C0C92EB5DD5F00B6E434 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = FFD7C0BC2EB5DD5900B6E434;
+					};
+					FFD7C0D32EB5DD5F00B6E434 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = FFD7C0BC2EB5DD5900B6E434;
+					};
+					FFD7C3272EB6124E00B6E434 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = FFD7C0B82EB5DD5900B6E434 /* Build configuration list for PBXProject "MagicTrafficLight" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FFD7C0B42EB5DD5900B6E434;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FFD7C0BE2EB5DD5900B6E434 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FFD7C0BC2EB5DD5900B6E434 /* MagicTrafficLight */,
+				FFD7C0C92EB5DD5F00B6E434 /* MagicTrafficLightTests */,
+				FFD7C0D32EB5DD5F00B6E434 /* MagicTrafficLightUITests */,
+				FFD7C3272EB6124E00B6E434 /* WidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FFD7C0BB2EB5DD5900B6E434 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0C82EB5DD5F00B6E434 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0D22EB5DD5F00B6E434 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C3262EB6124E00B6E434 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FFD7C0B92EB5DD5900B6E434 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0C62EB5DD5F00B6E434 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C0D02EB5DD5F00B6E434 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FFD7C3242EB6124E00B6E434 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FFD7C0CC2EB5DD5F00B6E434 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FFD7C0BC2EB5DD5900B6E434 /* MagicTrafficLight */;
+			targetProxy = FFD7C0CB2EB5DD5F00B6E434 /* PBXContainerItemProxy */;
+		};
+		FFD7C0D62EB5DD5F00B6E434 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FFD7C0BC2EB5DD5900B6E434 /* MagicTrafficLight */;
+			targetProxy = FFD7C0D52EB5DD5F00B6E434 /* PBXContainerItemProxy */;
+		};
+		FFD7C33B2EB6125100B6E434 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FFD7C3272EB6124E00B6E434 /* WidgetExtension */;
+			targetProxy = FFD7C33A2EB6125100B6E434 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FFD7C0DC2EB5DD5F00B6E434 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FFD7C0DD2EB5DD5F00B6E434 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 635367SA9L;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FFD7C0DF2EB5DD5F00B6E434 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagicTrafficLight/MagicTrafficLight.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to provide turn-by-turn navigation and show your current position on the map.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for voice search functionality.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs speech recognition to convert your voice into text for search.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FFD7C0E02EB5DD5F00B6E434 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MagicTrafficLight/MagicTrafficLight.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to provide turn-by-turn navigation and show your current position on the map.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access for voice search functionality.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs speech recognition to convert your voice into text for search.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FFD7C0E22EB5DD5F00B6E434 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicTrafficLight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicTrafficLight";
+			};
+			name = Debug;
+		};
+		FFD7C0E32EB5DD5F00B6E434 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicTrafficLight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicTrafficLight";
+			};
+			name = Release;
+		};
+		FFD7C0E52EB5DD5F00B6E434 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLightUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MagicTrafficLight;
+			};
+			name = Debug;
+		};
+		FFD7C0E62EB5DD5F00B6E434 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLightUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MagicTrafficLight;
+			};
+			name = Release;
+		};
+		FFD7C33F2EB6125100B6E434 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLight.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FFD7C3402EB6125100B6E434 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 635367SA9L;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = fitsyu2.MagicTrafficLight.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FFD7C0B82EB5DD5900B6E434 /* Build configuration list for PBXProject "MagicTrafficLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFD7C0DC2EB5DD5F00B6E434 /* Debug */,
+				FFD7C0DD2EB5DD5F00B6E434 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FFD7C0DE2EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFD7C0DF2EB5DD5F00B6E434 /* Debug */,
+				FFD7C0E02EB5DD5F00B6E434 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FFD7C0E12EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLightTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFD7C0E22EB5DD5F00B6E434 /* Debug */,
+				FFD7C0E32EB5DD5F00B6E434 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FFD7C0E42EB5DD5F00B6E434 /* Build configuration list for PBXNativeTarget "MagicTrafficLightUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFD7C0E52EB5DD5F00B6E434 /* Debug */,
+				FFD7C0E62EB5DD5F00B6E434 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FFD7C33E2EB6125100B6E434 /* Build configuration list for PBXNativeTarget "WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFD7C33F2EB6125100B6E434 /* Debug */,
+				FFD7C3402EB6125100B6E434 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FFD7C0B52EB5DD5900B6E434 /* Project object */;
+}
