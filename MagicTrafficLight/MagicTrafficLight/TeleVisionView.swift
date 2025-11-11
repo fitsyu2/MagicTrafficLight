@@ -274,6 +274,47 @@ class WebSocketHelpManager: NSObject, ObservableObject {
         }
     }
     
+    @MainActor
+    func sendLocationUpdate(location: CLLocation) {
+        guard isConnected else {
+            print("🔴 Cannot send location update - not connected")
+            return
+        }
+        
+        let userId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown-user"
+        
+        let locationUpdateMessage: [String: Any] = [
+            "type": "location_update",
+            "data": [
+                "userId": userId,
+                "latitude": location.coordinate.latitude,
+                "longitude": location.coordinate.longitude,
+                "accuracy": location.horizontalAccuracy,
+                "timestamp": ISO8601DateFormatter().string(from: location.timestamp),
+                "speed": location.speed >= 0 ? location.speed : 0, // Only include if valid
+                "heading": location.course >= 0 ? location.course : 0 // Only include if valid
+            ]
+        ]
+        
+        // Send as JSON directly
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: locationUpdateMessage)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            print("📍 Sending location update: lat=\(String(format: "%.6f", location.coordinate.latitude)), lng=\(String(format: "%.6f", location.coordinate.longitude))")
+            
+            webSocketTask?.send(.string(jsonString)) { error in
+                if let error = error {
+                    print("🔴 Failed to send location update: \(error)")
+                } else {
+                    print("✅ Location update sent successfully")
+                }
+            }
+        } catch {
+            print("🔴 Failed to encode location update: \(error)")
+        }
+    }
+
     deinit {
         disconnect()
     }
@@ -360,6 +401,12 @@ extension WebSocketHelpManager: URLSessionDelegate, URLSessionWebSocketDelegate 
                 case "help_request_accepted":
                     print("📱 Help request accepted!")
                     handleHelpAccepted()
+                case "status_update":
+                    if let statusData = json["data"] as? [String: Any],
+                       let connectedUsers = statusData["connected_users"] as? Int,
+                       let pendingRequests = statusData["pending_requests"] as? Int {
+                        print("📊 Status update: \(connectedUsers) users connected, \(pendingRequests) pending requests")
+                    }
                 case "requests_cleared":
                     if let clearData = json["data"] as? [String: Any],
                        let clearedCount = clearData["clearedCount"] as? Int,
@@ -1026,6 +1073,7 @@ struct TeleVisionView: View {
     @State private var requestSentTimer: Timer?
     @State private var awaitingTimer: Timer?
     @State private var feedbackTimer: Timer?
+    @State private var locationStreamingTimer: Timer?
     
     // 16:9 aspect ratio dimensions
     private var tvWidth: CGFloat {
@@ -1053,7 +1101,7 @@ struct TeleVisionView: View {
         if isStopping {
             return "Stopping.."
         } else if isRequestSuccessful {
-            return "Streaming"
+            return "Streaming Location"
         } else if isRequestTimeout {
             return "Timeout"
         } else if isRequestRejected {
@@ -1103,7 +1151,7 @@ struct TeleVisionView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
                             } else if isRequestSuccessful {
-                                Image(systemName: "checkmark.circle.fill")
+                                Image(systemName: "location.fill")
                             } else {
                                 Image(systemName: "antenna.radiowaves.left.and.right")
                             }
@@ -1166,6 +1214,9 @@ struct TeleVisionView: View {
                         isAwaitingAcceptance = false
                         isRequestSuccessful = true
                         print("✅ Help request accepted - cancelling timeout and transitioning to success state")
+                        
+                        // Start streaming location to helper
+                        startLocationStreaming()
                     case "rejected":
                         // Cancel timers and show rejected state
                         awaitingTimer?.invalidate()
@@ -1208,6 +1259,7 @@ struct TeleVisionView: View {
         .onDisappear {
             streamManager.stopStreaming()
             helpManager.disconnect()
+            stopLocationStreaming()
         }
     }
     
@@ -1934,6 +1986,37 @@ struct TeleVisionView: View {
         }
     }
     
+    private func startLocationStreaming() {
+        // Stop any existing streaming timer
+        locationStreamingTimer?.invalidate()
+        
+        print("📍 Starting location streaming to helper")
+        
+        // Send initial location immediately
+        if let location = locationManager.location {
+            helpManager.sendLocationUpdate(location: location)
+        }
+        
+        // Set up periodic location updates every 3 seconds
+        locationStreamingTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+            guard self.isRequestSuccessful else {
+                // Stop streaming if no longer in success state
+                self.stopLocationStreaming()
+                return
+            }
+            
+            if let location = self.locationManager.location {
+                self.helpManager.sendLocationUpdate(location: location)
+            }
+        }
+    }
+    
+    private func stopLocationStreaming() {
+        locationStreamingTimer?.invalidate()
+        locationStreamingTimer = nil
+        print("📍 Stopped location streaming")
+    }
+    
     private func handleStop() {
         guard !isStopping else { return }
         
@@ -1945,6 +2028,10 @@ struct TeleVisionView: View {
         requestSentTimer?.invalidate()
         awaitingTimer?.invalidate()
         feedbackTimer?.invalidate()
+        locationStreamingTimer?.invalidate()
+        
+        // Stop location streaming
+        stopLocationStreaming()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             self.isStopping = false
