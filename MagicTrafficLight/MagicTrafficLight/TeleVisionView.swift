@@ -76,7 +76,7 @@ class WebSocketHelpManager: NSObject, ObservableObject {
         }
     }
     
-    init(serverURL: String = "wss://magictrafficlight-production.up.railway.app") {
+    init(serverURL: String = "wss://magictrafficlight-production-b5ed.up.railway.app") {
         // Construct WebSocket URL for help requests
         self.helpWebSocketURL = URL(string: "\(serverURL)/ws/help")!
         print("🔗 WebSocketHelpManager initialized with URL: \(self.helpWebSocketURL)")
@@ -131,29 +131,35 @@ class WebSocketHelpManager: NSObject, ObservableObject {
         }
         
         let userId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown-user"
-        let requestId = UUID().uuidString
         
-        let helpRequestMessage = WebSocketMessage(
-            type: "help_request",
-            data: WebSocketMessage.Data(
-                id: requestId,
-                from: userId,
-                to: nil,
-                location: location.map { 
-                    WebSocketMessage.Data.Location(
-                        lat: $0.coordinate.latitude, 
-                        lng: $0.coordinate.longitude
-                    )
-                },
-                message: "Help needed from MagicTrafficLight user",
-                requestId: nil,
-                accepted: nil,
-                helperId: nil,
-                userId: userId
-            )
-        )
+        // Create message in the exact format the server expects
+        let helpRequestData: [String: Any] = [
+            "from": userId,
+            "message": "Help needed from MagicTrafficLight user"
+        ]
         
-        sendMessage(helpRequestMessage)
+        let helpRequestMessage: [String: Any] = [
+            "type": "help_request",
+            "data": helpRequestData
+        ]
+        
+        // Send as JSON directly
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: helpRequestMessage)
+            let jsonString = String(data: jsonData, encoding: .utf8)!
+            
+            print("📤 Sending help request JSON: \(jsonString)")
+            
+            webSocketTask?.send(.string(jsonString)) { error in
+                if let error = error {
+                    print("🔴 Failed to send help request: \(error)")
+                } else {
+                    print("✅ Help request sent successfully")
+                }
+            }
+        } catch {
+            print("🔴 Failed to encode help request: \(error)")
+        }
     }
     
     private func sendMessage(_ message: WebSocketMessage) {
@@ -273,11 +279,28 @@ extension WebSocketHelpManager: URLSessionDelegate, URLSessionWebSocketDelegate 
                let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let messageType = json["type"] as? String {
                 
+                print("📱 Processing message type: '\(messageType)'")
                 switch messageType {
-                case "help_accepted":
+                case "help_submitted":
+                    print("📱 Help request submitted successfully")
+                case "help_request_response":
+                    print("📱 Received help request response")
+                case "help_request_accepted":
+                    print("📱 Help request accepted!")
                     handleHelpAccepted()
-                case "help_rejected":
-                    handleHelpRejected()
+                case "requests_cleared":
+                    if let clearData = json["data"] as? [String: Any],
+                       let clearedCount = clearData["clearedCount"] as? Int,
+                       let message = clearData["message"] as? String {
+                        print("📱 Server cleared requests: \(message)")
+                    }
+                case "user_joined_ack":
+                    print("📱 User joined acknowledgment received")
+                case "error":
+                    if let errorData = json["data"] as? [String: String],
+                       let errorMessage = errorData["error"] {
+                        print("📱 Server error: \(errorMessage)")
+                    }
                 default:
                     print("📱 Unknown message type: \(messageType)")
                 }
@@ -915,7 +938,7 @@ struct TeleVisionView: View {
     @State private var isFullScreen = false
     @State private var isPiPMode = false
     @State private var scale: CGFloat = 1.0
-    @State private var streamURL = "https://magictrafficlight-production.up.railway.app/yuv420/sample"
+    @State private var streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
     @State private var showStreamSettings = false
     @State private var isLoading = false
     @State private var loadingTimer: Timer?
@@ -1047,7 +1070,7 @@ struct TeleVisionView: View {
         }
         .onAppear {
             // Set Railway production server URL by default
-            streamURL = "https://magictrafficlight-production.up.railway.app/yuv420/sample"
+            streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
             
             // Auto turn on when navigation starts (but don't auto-connect)
             if navigationManager.isNavigating && !isOn {
@@ -1154,12 +1177,12 @@ struct TeleVisionView: View {
                 
                 Section("Railway YUV420 Streaming") {
                     Button("YUV420 Sample (MOV Processing)") {
-                        streamURL = "https://magictrafficlight-production.up.railway.app/yuv420/sample"
+                        streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
                     }
                     .foregroundColor(.purple)
                     
                     Button("YUV420 Generated Frames") {
-                        streamURL = "https://magictrafficlight-production.up.railway.app/yuv420/stream"
+                        streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/stream"
                     }
                     .foregroundColor(.cyan)
                 }
