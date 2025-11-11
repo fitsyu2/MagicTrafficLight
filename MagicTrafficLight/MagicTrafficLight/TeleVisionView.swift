@@ -124,7 +124,8 @@ class WebSocketHelpManager: NSObject, ObservableObject {
         webSocketTask = nil
     }
 
-    func sendHelpRequest(location: CLLocation?) {
+    @MainActor
+    func sendHelpRequest(location: CLLocation?, navigationManager: NavigationManager) {
         guard isConnected else {
             print("🔴 Cannot send help request - not connected")
             return
@@ -132,11 +133,82 @@ class WebSocketHelpManager: NSObject, ObservableObject {
         
         let userId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown-user"
         
-        // Create message in the exact format the server expects
-        let helpRequestData: [String: Any] = [
+        // Prepare location data
+        var locationData: [String: Any]?
+        if let location = location {
+            locationData = [
+                "latitude": location.coordinate.latitude,
+                "longitude": location.coordinate.longitude,
+                "accuracy": location.horizontalAccuracy,
+                "timestamp": ISO8601DateFormatter().string(from: location.timestamp)
+            ]
+        }
+        
+        // Prepare route waypoints if navigation is active
+        var routeData: [String: Any]?
+        if navigationManager.isNavigating, let route = navigationManager.currentRoute {
+            var waypointsData: [[String: Any]] = []
+            
+            // Add all route steps as waypoints
+            for (index, step) in route.steps.enumerated() {
+                let coordinate = step.polyline.coordinate
+                let waypointData: [String: Any] = [
+                    "stepIndex": index,
+                    "latitude": coordinate.latitude,
+                    "longitude": coordinate.longitude,
+                    "instructions": step.instructions,
+                    "distance": step.distance,
+                    "isCurrentStep": index == navigationManager.currentStepIndex
+                ]
+                waypointsData.append(waypointData)
+            }
+            
+            // Add destination information
+            var destinationData: [String: Any]?
+            if let destination = navigationManager.destination {
+                destinationData = [
+                    "name": destination.name ?? "Unknown Destination",
+                    "latitude": destination.placemark.coordinate.latitude,
+                    "longitude": destination.placemark.coordinate.longitude,
+                    "address": destination.placemark.title ?? ""
+                ]
+            }
+            
+            routeData = [
+                "isNavigating": true,
+                "currentStepIndex": navigationManager.currentStepIndex,
+                "totalSteps": route.steps.count,
+                "remainingDistance": navigationManager.remainingDistance,
+                "estimatedTimeRemaining": navigationManager.estimatedTimeRemaining,
+                "waypoints": waypointsData,
+                "destination": destinationData ?? [:]
+            ]
+        }
+        
+        // Create comprehensive help request data
+        var helpRequestData: [String: Any] = [
             "from": userId,
-            "message": "Help needed from MagicTrafficLight user"
+            "message": "Help needed from MagicTrafficLight user",
+            "deviceInfo": [
+                "model": UIDevice.current.model,
+                "systemVersion": UIDevice.current.systemVersion,
+                "appVersion": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+            ]
         ]
+        
+        // Add location if available
+        if let locationData = locationData {
+            helpRequestData["location"] = locationData
+        }
+        
+        // Add route information if available
+        if let routeData = routeData {
+            helpRequestData["route"] = routeData
+        } else {
+            helpRequestData["route"] = [
+                "isNavigating": false
+            ]
+        }
         
         let helpRequestMessage: [String: Any] = [
             "type": "help_request",
@@ -292,7 +364,7 @@ extension WebSocketHelpManager: URLSessionDelegate, URLSessionWebSocketDelegate 
                     if let clearData = json["data"] as? [String: Any],
                        let clearedCount = clearData["clearedCount"] as? Int,
                        let message = clearData["message"] as? String {
-                        print("📱 Server cleared requests: \(message)")
+                        print("📱 Server cleared requests: \(message), count: \(clearedCount)")
                     }
                 case "user_joined_ack":
                     print("📱 User joined acknowledgment received")
@@ -1093,6 +1165,7 @@ struct TeleVisionView: View {
                         // Transition to streaming state
                         isAwaitingAcceptance = false
                         isRequestSuccessful = true
+                        print("✅ Help request accepted - cancelling timeout and transitioning to success state")
                     case "rejected":
                         // Cancel timers and show rejected state
                         awaitingTimer?.invalidate()
@@ -1811,7 +1884,7 @@ struct TeleVisionView: View {
         
         // Send help request with current location
         let currentLocation = locationManager.location
-        helpManager.sendHelpRequest(location: currentLocation)
+        helpManager.sendHelpRequest(location: currentLocation, navigationManager: navigationManager)
         
         // Step 1: Show "Help Request sent" briefly (2 seconds)
         loadingTimer?.invalidate()
@@ -1833,6 +1906,12 @@ struct TeleVisionView: View {
                         self.awaitingTimer?.invalidate()
                         self.awaitingTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
                             DispatchQueue.main.async {
+                                // Check if the request hasn't already been accepted or rejected
+                                guard self.isAwaitingAcceptance && !self.isRequestSuccessful && !self.isRequestRejected else {
+                                    print("🔄 Timer fired but request already handled - ignoring timeout")
+                                    return
+                                }
+                                
                                 self.isAwaitingAcceptance = false
                                 self.isRequestTimeout = true
                                 print("⏰ No response received - Showing timeout message")
