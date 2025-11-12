@@ -524,6 +524,7 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     
     // Connection state
     private var isConnecting = false
+    private var isAndroidPolling = false // Track if we're using Android polling
     
     enum StreamStatus: Equatable {
         case disconnected
@@ -723,13 +724,14 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
         print("📡 🔍 Full URL: \(url.absoluteString)")
         print("📡 🌐 Host: \(url.host ?? "unknown")")
         print("📡 🛤️ Path: \(url.path)")
-        print("📡 ⚡ Will poll every 33ms for live updates (30 FPS)")
+        print("📡 ⚡ Will poll every 200ms for 360x640 RGB at 5fps")
         
         connectionStatus = .connected
         isStreaming = true
+        isAndroidPolling = true // Set flag to prevent conflicting timers
         
-        // Start polling timer - poll every 33ms (30 FPS) for more responsive frame capture
-        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { [weak self] _ in
+        // Start polling timer - poll every 200ms (5 FPS) to match Android upload rate
+        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             guard let self = self, self.isStreaming else { return }
             self.pollAndroidFrame(from: url)
         }
@@ -830,6 +832,14 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
                 print("📡   - Server frame size header: \(serverFrameSize) bytes")
                 print("📡   - Expected size (w×h×4): \(expectedSize) bytes")
                 print("📡   - Server timestamp: \(serverTimestamp)")
+                
+                // Specific check for 360x640 RGB @ 5fps configuration
+                if width == 360 && height == 640 {
+                    let expected360x640 = 360 * 640 * 4  // = 921,600 bytes
+                    print("📡 🎯 360x640 RGB DETECTED:")
+                    print("📡   - Expected for 360x640 RGBA: \(expected360x640) bytes")
+                    print("📡   - Match status: \(data.count == expected360x640 ? "✅ PERFECT" : "❌ MISMATCH")")
+                }
                 
                 // Detailed size analysis with FIXED SERVER NOTE
                 if data.count == expectedSize && serverFrameSize == expectedSize {
@@ -944,6 +954,16 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
         }
         
         let expectedSize = width * height * 4 // RGBA = 4 bytes per pixel
+        
+        // Specific validation for 360x640 @ 5fps configuration
+        if width == 360 && height == 640 {
+            let expected360x640 = 921600 // 360 * 640 * 4
+            print("📡 🎯 Processing 360x640 RGB frame:")
+            print("📡   - Expected: \(expected360x640) bytes")
+            print("📡   - Received: \(data.count) bytes")
+            print("📡   - Status: \(data.count == expected360x640 ? "✅ Perfect match!" : "⚠️ Size mismatch")")
+        }
+        
         guard data.count >= expectedSize else {
             print("📡 ❌ Insufficient RGBA data: need \(expectedSize), got \(data.count)")
             return nil
