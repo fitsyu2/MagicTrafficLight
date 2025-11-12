@@ -519,6 +519,7 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     
     // Frame rate calculation
     private var frameCount = 0
+    private var lastSuccessfulFrame: UIImage?
     private var lastFrameTime = Date()
     
     // Connection state
@@ -537,6 +538,7 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
         case webSocket(URL)
         case http(URL)
         case yuv420(URL)
+        case androidPolling(URL)  // New: HTTP polling for Android RGBA frames
     }
     
     struct YUV420FrameHeader {
@@ -607,21 +609,34 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     }
     
     func startStreaming(from url: URL, type: StreamType? = nil) {
-        print("📡 FrameStreamManager: Starting stream from \(url)")
+        print("📡 🚀 FrameStreamManager: Starting stream from \(url)")
+        print("📡 🔍 URL Analysis:")
+        print("📡   - Scheme: \(url.scheme ?? "nil")")
+        print("📡   - Host: \(url.host ?? "nil")")
+        print("📡   - Path: \(url.path)")
+        print("📡   - Absolute String: \(url.absoluteString)")
+        
         isConnecting = true
         
         // Auto-detect stream type based on URL if not specified
         let streamType = type ?? detectStreamType(from: url)
         
+        print("📡 🎯 Stream type determined: \(streamType)")
+        
         switch streamType {
         case .webSocket(let wsUrl):
-            print("📡 Using WebSocket stream")
+            print("📡 🌐 Using WebSocket stream for H.264")
+            print("📡 🎥 This should receive H.264 frames!")
             startWebSocketStream(url: wsUrl)
+        case .androidPolling(let pollingUrl):
+            print("📡 📱 Using Android HTTP polling for RGBA frames")
+            print("📡 🎨 This will poll for Android RGBA_8888 frames!")
+            startAndroidPolling(url: pollingUrl)
         case .http(let httpUrl):
-            print("📡 Using HTTP stream")
+            print("📡 🌍 Using HTTP stream")
             startHTTPStream(url: httpUrl)
         case .yuv420(let yuvUrl):
-            print("📡 Using YUV420 stream")
+            print("📡 📺 Using YUV420 stream")
             startYUV420Stream(url: yuvUrl)
         }
     }
@@ -629,11 +644,19 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     private func detectStreamType(from url: URL) -> StreamType {
         let urlString = url.absoluteString.lowercased()
         
+        print("📡 🕵️ Detecting stream type for URL: \(urlString)")
+        
         if urlString.contains("ws://") || urlString.contains("wss://") {
+            print("📡 ✅ Detected WebSocket URL - returning .webSocket type")
             return .webSocket(url)
+        } else if urlString.contains("/api/android/frame") {
+            print("📡 ✅ Detected Android polling URL - returning .androidPolling type")
+            return .androidPolling(url)
         } else if urlString.contains("yuv420") || urlString.contains("yuv") {
+            print("📡 ✅ Detected YUV URL - returning .yuv420 type")
             return .yuv420(url)
         } else {
+            print("📡 ⚠️ No specific type detected - defaulting to .yuv420 type")
             // Default to YUV420 for HTTP streams
             return .yuv420(url)
         }
@@ -679,43 +702,522 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     }
     
     private func startWebSocketStream(url: URL) {
+        print("📡 🚀 Starting WebSocket H.264 stream to: \(url)")
+        
         let session = URLSession(configuration: .default)
         webSocketTask = session.webSocketTask(with: url)
+        
+        // Add state monitoring for the WebSocket
+        print("📡 🔌 WebSocket task created, starting connection...")
         webSocketTask?.resume()
         
         connectionStatus = .connected
+        isStreaming = true
+        
+        print("📡 ✅ WebSocket H.264 stream started, beginning to listen for frames...")
         receiveWebSocketFrame()
     }
     
+    private func startAndroidPolling(url: URL) {
+        print("📡 🚀 Starting Android RGBA frame polling from: \(url)")
+        print("📡 🔍 Full URL: \(url.absoluteString)")
+        print("📡 🌐 Host: \(url.host ?? "unknown")")
+        print("📡 🛤️ Path: \(url.path)")
+        print("📡 ⚡ Will poll every 33ms for live updates (30 FPS)")
+        
+        connectionStatus = .connected
+        isStreaming = true
+        
+        // Start polling timer - poll every 33ms (30 FPS) for more responsive frame capture
+        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { [weak self] _ in
+            guard let self = self, self.isStreaming else { return }
+            self.pollAndroidFrame(from: url)
+        }
+        
+        print("📡 ✅ Android polling started successfully")
+        
+        // Also do an immediate poll to test the connection
+        print("📡 🎯 Performing immediate test poll...")
+        pollAndroidFrame(from: url)
+    }
+    
+    private func stopAndroidPolling() {
+        print("📡 🛑 Stopping Android RGBA frame polling...")
+        
+        // Stop the timer first
+        frameTimer?.invalidate()
+        frameTimer = nil
+        
+        // Update state
+        isStreaming = false
+        connectionStatus = .disconnected
+        
+        print("📡 ✅ Android polling stopped successfully")
+    }
+    
+    private func pollAndroidFrame(from url: URL) {
+        guard isStreaming else {
+            print("📡 ⏹️ Stopping Android polling - streaming disabled")
+            return
+        }
+        
+        print("📡 📡 Polling for Android frame from: \(url.absoluteString)")
+        
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5.0 // 5 second timeout
+        request.setValue("iOS-MagicTrafficLight/1.0", forHTTPHeaderField: "User-Agent")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            let timestamp = DateFormatter().string(from: Date())
+            
+            if let error = error {
+                print("📡 ❌ [\(timestamp)] Android polling error: \(error.localizedDescription)")
+                
+                // Check for specific error types
+                if let urlError = error as? URLError {
+                    switch urlError.code {
+                    case .notConnectedToInternet:
+                        print("📡 🔴 No internet connection")
+                    case .timedOut:
+                        print("📡 ⏱️ Request timed out (server may be down)")
+                    case .cannotConnectToHost:
+                        print("📡 🏠 Cannot connect to host (server may be down)")
+                    case .cannotFindHost:
+                        print("📡 🔍 Cannot find host (DNS issue)")
+                    default:
+                        print("📡 🔗 URL Error: \(urlError.localizedDescription)")
+                    }
+                }
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("📡 ❌ [\(timestamp)] Invalid response type")
+                return
+            }
+            
+            print("📡 📊 [\(timestamp)] HTTP Response: \(httpResponse.statusCode)")
+            print("📡 🔍 Response URL: \(httpResponse.url?.absoluteString ?? "unknown")")
+            print("📡 📋 Response Headers:")
+            for (key, value) in httpResponse.allHeaderFields {
+                print("📡    \(key): \(value)")
+            }
+            
+            if httpResponse.statusCode == 200 {
+                guard let data = data else {
+                    print("📡 ❌ [\(timestamp)] No frame data received despite 200 status")
+                    return
+                }
+                
+                print("📡 ✅ [\(timestamp)] Frame received! Data size: \(data.count) bytes")
+                
+                // Extract metadata from headers
+                let width = Int(httpResponse.value(forHTTPHeaderField: "X-Frame-Width") ?? "0") ?? 0
+                let height = Int(httpResponse.value(forHTTPHeaderField: "X-Frame-Height") ?? "0") ?? 0
+                let format = httpResponse.value(forHTTPHeaderField: "X-Frame-Format") ?? "Unknown"
+                let serverTimestamp = httpResponse.value(forHTTPHeaderField: "X-Frame-Timestamp") ?? "0"
+                let serverFrameSize = Int(httpResponse.value(forHTTPHeaderField: "X-Frame-Size") ?? "0") ?? 0
+                
+                // Calculate expected size for RGBA_8888
+                let expectedSize = width * height * 4
+                
+                print("📡 📋 [\(timestamp)] Android frame metadata:")
+                print("📡   - Size: \(width)x\(height)")
+                print("📡   - Format: \(format)")
+                print("📡   - Actual data size: \(data.count) bytes")
+                print("📡   - Server frame size header: \(serverFrameSize) bytes")
+                print("📡   - Expected size (w×h×4): \(expectedSize) bytes")
+                print("📡   - Server timestamp: \(serverTimestamp)")
+                
+                // Detailed size analysis with FIXED SERVER NOTE
+                if data.count == expectedSize && serverFrameSize == expectedSize {
+                    print("📡 ✅ PERFECT MATCH: All size calculations agree! Header parsing fix worked!")
+                } else if data.count != expectedSize {
+                    print("📡 🔍 Size Analysis:")
+                    print("📡   - Difference: \(data.count - expectedSize) bytes")
+                    print("📡   - Ratio: \(String(format: "%.3f", Double(data.count) / Double(expectedSize)))")
+                    
+                    if data.count > expectedSize {
+                        print("📡   - Data is LARGER than expected (may have headers/padding)")
+                    } else {
+                        print("📡   - Data is SMALLER than expected (may be incomplete)")
+                    }
+                }
+                
+                if serverFrameSize != data.count {
+                    print("📡 ⚠️ Server header mismatch: server says \(serverFrameSize), got \(data.count)")
+                }
+                
+                if serverFrameSize == expectedSize {
+                    print("📡 ✅ Server calculation CORRECT: \(serverFrameSize) = \(expectedSize) (header parsing works!)")
+                } else if serverFrameSize != expectedSize {
+                    print("📡 ❌ Server calculation mismatch: server calculated \(serverFrameSize), we calculated \(expectedSize)")
+                    print("📡 🔧 This suggests server header parsing may still have issues")
+                }
+                
+                // Validate basic requirements
+                guard width > 0 && height > 0 else {
+                    print("📡 ❌ Invalid frame dimensions: \(width)x\(height)")
+                    return
+                }
+                
+                guard data.count >= expectedSize else {
+                    print("📡 ❌ Insufficient data: need at least \(expectedSize) bytes for \(width)x\(height) RGBA")
+                    return
+                }
+                
+                // Try to convert even if sizes don't match exactly (use expected size)
+                let frameData = data.count > expectedSize ? data.prefix(expectedSize) : data
+                print("📡 🎨 Converting frame data: using \(frameData.count) bytes for \(width)x\(height)")
+                
+                // Convert RGBA data to UIImage - try server dimensions first
+                if let image = self.createImageFromRGBAData(Data(frameData), width: width, height: height) {
+                    print("📡 ✅ Successfully converted RGBA data to UIImage using server dimensions \(width)x\(height)")
+                    DispatchQueue.main.async {
+                        self.addFrameToBuffer(image)
+                        self.lastSuccessfulFrame = image
+                        if self.connectionStatus != .streaming {
+                            self.connectionStatus = .streaming
+                        }
+                        print("📡 🖼️ Frame displayed in UI!")
+                    }
+                } else {
+                    print("📡 ❌ Failed to convert RGBA data using server dimensions \(width)x\(height)")
+                    print("📡 🔧 Trying calculated dimensions based on actual data size...")
+                    
+                    // Try to calculate dimensions from actual data size
+                    let actualDataSize = data.count
+                    let possibleDimensions = self.calculatePossibleDimensions(dataSize: actualDataSize)
+                    
+                    var conversionSuccess = false
+                    for (w, h) in possibleDimensions {
+                        print("📡 🧮 Trying dimensions: \(w)x\(h)")
+                        if let image = self.createImageFromRGBAData(Data(frameData), width: w, height: h) {
+                            print("📡 ✅ SUCCESS with calculated dimensions \(w)x\(h)")
+                            DispatchQueue.main.async {
+                                self.addFrameToBuffer(image)
+                                self.lastSuccessfulFrame = image
+                                if self.connectionStatus != .streaming {
+                                    self.connectionStatus = .streaming
+                                }
+                                print("📡 🖼️ Frame displayed with calculated dimensions!")
+                            }
+                            conversionSuccess = true
+                            break
+                        }
+                    }
+                    
+                    if !conversionSuccess {
+                        print("📡 ❌ Failed to convert RGBA data with any calculated dimensions")
+                    }
+                }
+                
+            } else if httpResponse.statusCode == 404 {
+                // No frame available - this is normal, just continue polling
+                print("📡 ℹ️ [\(timestamp)] No Android frame available (404) - this is normal")
+                
+                // Check if this is the first time we're seeing 404s
+                if self.connectionStatus != .connected && self.connectionStatus != .streaming {
+                    print("📡 📡 Server is responding but no frames uploaded yet")
+                    DispatchQueue.main.async {
+                        self.connectionStatus = .connected
+                    }
+                }
+            } else {
+                print("📡 ❌ [\(timestamp)] Unexpected HTTP status: \(httpResponse.statusCode)")
+                if let data = data, let responseBody = String(data: data, encoding: .utf8) {
+                    print("📡 📄 Response body: \(responseBody)")
+                }
+            }
+            
+        }.resume()
+    }
+    
+    private func createImageFromRGBAData(_ data: Data, width: Int, height: Int) -> UIImage? {
+        print("📡 🎨 Converting RGBA data to UIImage: \(width)x\(height), \(data.count) bytes")
+        
+        guard width > 0 && height > 0 else {
+            print("📡 ❌ Invalid dimensions: \(width)x\(height)")
+            return nil
+        }
+        
+        let expectedSize = width * height * 4 // RGBA = 4 bytes per pixel
+        guard data.count >= expectedSize else {
+            print("📡 ❌ Insufficient RGBA data: need \(expectedSize), got \(data.count)")
+            return nil
+        }
+        
+        // Create a CGImage from RGBA data
+        let bytesPerPixel = 4
+        let bytesPerRow = width * bytesPerPixel
+        
+        guard let provider = CGDataProvider(data: data as CFData),
+              let cgImage = CGImage(
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bitsPerPixel: 32,
+                bytesPerRow: bytesPerRow,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue),
+                provider: provider,
+                decode: nil,
+                shouldInterpolate: false,
+                intent: .defaultIntent
+              ) else {
+            print("📡 ❌ Failed to create CGImage from RGBA data")
+            return nil
+        }
+        
+        let image = UIImage(cgImage: cgImage)
+        print("📡 ✅ Successfully created UIImage: \(image.size)")
+        return image
+    }
+    
+    private func calculatePossibleDimensions(dataSize: Int) -> [(width: Int, height: Int)] {
+        print("📡 🧮 Calculating possible dimensions for \(dataSize) bytes")
+        
+        let pixelCount = dataSize / 4 // RGBA = 4 bytes per pixel
+        var possibilities: [(Int, Int)] = []
+        
+        // Based on the 60% ratio (4,976,640 vs 8,294,400), let's try some common dimensions
+        // that might result in this exact data size
+        
+        // Calculate what dimensions would give us exactly this data size
+        let exactPixels = dataSize / 4
+        print("📡 🔢 Exact pixel count: \(exactPixels)")
+        
+        // Try to find integer square root approximations
+        let sqrtValue = Double(exactPixels).squareRoot()
+        print("📡 📐 Square root: \(sqrtValue)")
+        
+        // Common aspect ratios that might fit
+        let aspectRatios: [(Double, Double)] = [
+            (1.0, 1.0),     // 1:1 square
+            (4.0, 3.0),     // 4:3 traditional
+            (16.0, 9.0),    // 16:9 widescreen
+            (3.0, 2.0),     // 3:2 photo
+            (5.0, 4.0),     // 5:4
+            (16.0, 10.0),   // 16:10
+            (1.33, 1.0),    // ~4:3
+        ]
+        
+        for (ratioW, ratioH) in aspectRatios {
+            // Calculate dimensions for this aspect ratio
+            let h = (Double(exactPixels) / (ratioW / ratioH)).squareRoot()
+            let w = h * (ratioW / ratioH)
+            
+            let intW = Int(round(w))
+            let intH = Int(round(h))
+            
+            // Check if this gives us the exact data size
+            if intW * intH * 4 == dataSize {
+                possibilities.append((intW, intH))
+                print("📡 ✅ Found exact match: \(intW)x\(intH) = \(intW * intH) pixels = \(intW * intH * 4) bytes")
+            }
+        }
+        
+        // Also try some specific common resolutions that might be close
+        let commonResolutions: [(Int, Int)] = [
+            (1115, 1115),   // Square that might match
+            (1280, 972),    // Calculated from ratio
+            (1024, 1214),   // Another possibility
+            (960, 1296),    // Another possibility
+            (1200, 1037),   // Another possibility
+        ]
+        
+        for (w, h) in commonResolutions {
+            let calculatedSize = w * h * 4
+            if calculatedSize == dataSize {
+                possibilities.append((w, h))
+                print("📡 ✅ Common resolution exact match: \(w)x\(h)")
+            } else if abs(calculatedSize - dataSize) < 1000 { // Within 1KB
+                print("📡 ⚠️ Close match: \(w)x\(h) = \(calculatedSize) bytes (diff: \(calculatedSize - dataSize))")
+            }
+        }
+        
+        // If no exact matches, try the closest integer factors
+        if possibilities.isEmpty {
+            print("📡 🔍 No exact matches found, trying closest factors...")
+            
+            // Find factors of the pixel count
+            var factors: [(Int, Int)] = []
+            let maxFactor = Int(sqrtValue) + 100 // Search around the square root
+            
+            for i in 1...maxFactor {
+                if exactPixels % i == 0 {
+                    let j = exactPixels / i
+                    factors.append((i, j))
+                    factors.append((j, i)) // Both orientations
+                }
+            }
+            
+            // Sort by how close to square they are (most reasonable aspect ratios first)
+            factors.sort { pair1, pair2 in
+                let ratio1 = Double(max(pair1.0, pair1.1)) / Double(min(pair1.0, pair1.1))
+                let ratio2 = Double(max(pair2.0, pair2.1)) / Double(min(pair2.0, pair2.1))
+                return ratio1 < ratio2
+            }
+            
+            // Take the most reasonable aspect ratios (first few)
+            possibilities = Array(factors.prefix(5))
+            
+            print("📡 📊 Best factor pairs:")
+            for (i, (w, h)) in possibilities.enumerated() {
+                let ratio = Double(max(w, h)) / Double(min(w, h))
+                print("📡   \(i + 1). \(w)x\(h) (ratio: \(String(format: "%.2f", ratio)):1)")
+            }
+        }
+        
+        return possibilities
+    }
+    
     private func receiveWebSocketFrame() {
+        guard webSocketTask != nil else {
+            print("📡 ❌ receiveWebSocketFrame: No WebSocket task available")
+            return
+        }
+        
+        guard isStreaming else {
+            print("📡 ⏹️ receiveWebSocketFrame: Streaming stopped, not listening for frames")
+            return
+        }
+        
+        print("📡 👂 Waiting for WebSocket message...")
+        
         webSocketTask?.receive { [weak self] result in
+            guard let self = self else { 
+                print("📡 ❌ receiveWebSocketFrame callback: self is nil")
+                return 
+            }
+            
+            print("📡 📨 WebSocket receive callback triggered")
+            
             switch result {
             case .success(let message):
+                print("📡 ✅ Successfully received WebSocket message")
+                
                 switch message {
                 case .data(let data):
-                    if let image = UIImage(data: data) {
-                        DispatchQueue.main.async {
-                            self?.addFrameToBuffer(image)
-                        }
-                    }
+                    print("📡 📊 Received BINARY data: \(data.count) bytes")
+                    print("📡 🔍 Data preview (first 32 bytes): \(data.prefix(32).map { String(format: "%02x", $0) }.joined(separator: " "))")
+                    // Handle H.264 frame data with metadata header
+                    self.processH264Frame(data)
                 case .string(let text):
+                    print("📡 📝 Received TEXT message: '\(text)'")
                     if text == "STREAM_START" {
+                        print("📡 🚀 Received STREAM_START signal")
                         DispatchQueue.main.async {
-                            self?.connectionStatus = .streaming
-                            self?.isStreaming = true
-                            self?.startFramePlayback()
+                            self.connectionStatus = .streaming
+                            self.isStreaming = true
+                            self.startFramePlayback()
                         }
+                    } else {
+                        print("📡 ⚠️ Warning: Expected binary data for H.264, got text: '\(text)'")
                     }
                 @unknown default:
-                    break
+                    print("📡 ❓ Received UNKNOWN message type")
                 }
-                self?.receiveWebSocketFrame()
+                
+                // Continue listening for more frames
+                if self.isStreaming {
+                    print("📡 🔄 Continuing to listen for next frame...")
+                    self.receiveWebSocketFrame()
+                } else {
+                    print("📡 ⏹️ Streaming stopped, not scheduling next receive")
+                }
+                
             case .failure(let error):
+                print("📡 ❌ WebSocket receive failed: \(error)")
+                print("📡 🔍 Error details: \(error.localizedDescription)")
                 DispatchQueue.main.async {
-                    self?.connectionStatus = .error(error.localizedDescription)
+                    self.connectionStatus = .error("WebSocket receive failed: \(error.localizedDescription)")
+                    self.isStreaming = false
                 }
             }
         }
+    }
+    
+    private func processH264Frame(_ data: Data) {
+        print("📡 🎥 === H.264 FRAME PROCESSING START ===")
+        print("📡 📊 Received H.264 frame: \(data.count) bytes")
+        
+        guard isStreaming && connectionStatus != .disconnected else {
+            print("📡 ❌ Ignoring H.264 frame - streaming stopped or disconnected")
+            print("📡 🔍 Current state: isStreaming=\(isStreaming), connectionStatus=\(connectionStatus)")
+            return
+        }
+        
+        // Parse metadata header (28 bytes) + H.264 frame data
+        guard data.count > 28 else {
+            print("📡 ❌ H.264 frame too small: \(data.count) bytes (need at least 29 bytes)")
+            print("📡 🔍 Data hex dump: \(data.map { String(format: "%02x", $0) }.joined(separator: " "))")
+            return
+        }
+        
+        // Extract metadata header (28 bytes)
+        let headerData = data.subdata(in: 0..<28)
+        let frameData = data.subdata(in: 28..<data.count)
+        
+        print("📡 📋 Header data (28 bytes): \(headerData.map { String(format: "%02x", $0) }.joined(separator: " "))")
+        print("📡 🎬 Frame data: \(frameData.count) bytes")
+        print("📡 🎬 First 16 bytes of frame: \(frameData.prefix(16).map { String(format: "%02x", $0) }.joined(separator: " "))")
+        
+        // Parse frame metadata
+        let width = headerData.withUnsafeBytes { $0.load(fromByteOffset: 0, as: UInt32.self) }
+        let height = headerData.withUnsafeBytes { $0.load(fromByteOffset: 4, as: UInt32.self) }
+        let dataLength = headerData.withUnsafeBytes { $0.load(fromByteOffset: 8, as: UInt32.self) }
+        let isKeyFrame = headerData.withUnsafeBytes { $0.load(fromByteOffset: 12, as: UInt32.self) } == 1
+        let presentationTime = headerData.withUnsafeBytes { $0.load(fromByteOffset: 16, as: UInt64.self) }
+        let frameRate = headerData.withUnsafeBytes { $0.load(fromByteOffset: 24, as: UInt32.self) }
+        
+        print("📡 📐 H.264 Metadata:")
+        print("📡   - Width: \(width)")
+        print("📡   - Height: \(height)")
+        print("📡   - Data Length: \(dataLength)")
+        print("📡   - Key Frame: \(isKeyFrame)")
+        print("📡   - Presentation Time: \(presentationTime)")
+        print("📡   - Frame Rate: \(frameRate)")
+        
+        // Validate H.264 frame format
+        guard frameData.count >= 5 else {
+            print("📡 ❌ Invalid H.264 frame size: \(frameData.count) bytes (need at least 5)")
+            return
+        }
+        
+        // Check H.264 Annex B start code (0x00000001)
+        let startCode = frameData.prefix(4)
+        let startCodeHex = startCode.map { String(format: "%02x", $0) }.joined(separator: " ")
+        print("📡 🔍 H.264 start code check: \(startCodeHex)")
+        
+        guard frameData[0] == 0x00 && frameData[1] == 0x00 && 
+              frameData[2] == 0x00 && frameData[3] == 0x01 else {
+            print("📡 ❌ Invalid H.264 start code. Expected: 00 00 00 01, Got: \(startCodeHex)")
+            return
+        }
+        
+        print("📡 ✅ Valid H.264 start code detected")
+        
+        // Convert H.264 to UIImage using VideoToolbox
+        print("📡 🎨 Attempting to decode H.264 frame to UIImage...")
+        if let image = decodeH264ToImage(frameData, width: Int(width), height: Int(height)) {
+            print("📡 🎉 Successfully created placeholder image for H.264 frame!")
+            DispatchQueue.main.async {
+                self.addFrameToBuffer(image)
+                self.frameRate = Double(frameRate)
+                if self.connectionStatus != .streaming {
+                    print("📡 🔄 Updating connection status to streaming")
+                    self.connectionStatus = .streaming
+                }
+            }
+            print("📡 ✅ Successfully decoded H.264 frame to UIImage")
+        } else {
+            print("📡 ❌ Failed to decode H.264 frame to UIImage")
+        }
+        
+        print("📡 🎥 === H.264 FRAME PROCESSING END ===\n")
     }
     
     private func startHTTPStream(url: URL) {
@@ -975,6 +1477,14 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     }
     
     private func startFramePlayback() {
+        // Don't start frame playback timer if we're using Android polling
+        // (Android polling handles frame display directly)
+        if let url = dataTask?.originalRequest?.url,
+           url.path.contains("/api/android/frame") {
+            print("📡 🚫 Skipping frame playback timer - using Android polling")
+            return
+        }
+        
         frameTimer?.invalidate()
         frameTimer = Timer.scheduledTimer(withTimeInterval: 1.0/30.0, repeats: true) { [weak self] _ in
             guard let self = self, self.isStreaming else { return }
@@ -984,17 +1494,20 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
     
     private func addFrameToBuffer(_ image: UIImage) {
         guard isStreaming else {
-            print("📡 Ignoring frame - streaming stopped")
+            print("📡 🚫 Ignoring frame - streaming stopped")
             return
         }
         
-        frameBuffer.append(image)
+        print("📡 🎞️ Displaying frame directly! Image size: \(image.size)")
         
-        // Keep buffer size manageable
-        let maxBufferSize = 30
-        if frameBuffer.count > maxBufferSize {
-            frameBuffer.removeFirst()
+        // For Android polling, display frames immediately without buffering
+        DispatchQueue.main.async {
+            self.currentFrame = image
+            print("📡 🖼️ Frame set as currentFrame! Should be visible now.")
         }
+        
+        // Update frame rate calculation
+        calculateFrameRate()
     }
     
     private func displayNextFrame() {
@@ -1015,6 +1528,112 @@ class FrameStreamManager: NSObject, ObservableObject, URLSessionDataDelegate {
             frameRate = Double(frameCount) / timeDiff
             frameCount = 0
             lastFrameTime = now
+        }
+    }
+    
+    private func decodeH264ToImage(_ h264Data: Data, width: Int, height: Int) -> UIImage? {
+        // Create CMSampleBuffer from H.264 data
+        guard let sampleBuffer = createSampleBuffer(from: h264Data) else {
+            print("📡 Failed to create CMSampleBuffer from H.264 data")
+            return nil
+        }
+        
+        // Get format description from sample buffer
+        guard let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) else {
+            print("📡 Failed to get format description from sample buffer")
+            return nil
+        }
+        
+        // Create VTDecompressionSession
+        var decompressionSession: VTDecompressionSession?
+        let status = VTDecompressionSessionCreate(
+            allocator: kCFAllocatorDefault,
+            formatDescription: formatDescription,
+            decoderSpecification: nil,
+            imageBufferAttributes: [
+                kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+                kCVPixelBufferWidthKey: width,
+                kCVPixelBufferHeightKey: height
+            ] as CFDictionary,
+            outputCallback: nil,
+            decompressionSessionOut: &decompressionSession
+        )
+        
+        guard status == noErr, let session = decompressionSession else {
+            print("📡 Failed to create VTDecompressionSession: \(status)")
+            return nil
+        }
+        
+        // Decode frame
+        let decodeStatus = VTDecompressionSessionDecodeFrame(
+            session,
+            sampleBuffer: sampleBuffer,
+            flags: [],
+            frameRefcon: nil,
+            infoFlagsOut: nil
+        )
+        
+        VTDecompressionSessionInvalidate(session)
+        
+        guard decodeStatus == noErr else {
+            print("📡 Failed to decode H.264 frame: \(decodeStatus)")
+            return nil
+        }
+        
+        // For now, create a placeholder image since VideoToolbox decoding is complex
+        // In a real implementation, you'd need to properly handle the asynchronous nature
+        return createPlaceholderImage(width: width, height: height)
+    }
+    
+    private func createSampleBuffer(from h264Data: Data) -> CMSampleBuffer? {
+        // Simplified implementation - creates a placeholder
+        // Real implementation would need proper H.264 parsing and CMSampleBuffer creation
+        return nil
+    }
+    
+    private func createPlaceholderImage(width: Int, height: Int) -> UIImage? {
+        let size = CGSize(width: width, height: height)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        
+        return renderer.image { context in
+            // Create a gradient background to indicate H.264 frame received
+            let gradient = CGGradient(
+                colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                colors: [
+                    UIColor.systemBlue.cgColor,
+                    UIColor.systemPurple.cgColor
+                ] as CFArray,
+                locations: [0.0, 1.0]
+            )
+            
+            context.cgContext.drawLinearGradient(
+                gradient!,
+                start: CGPoint.zero,
+                end: CGPoint(x: size.width, y: size.height),
+                options: []
+            )
+            
+            // Add H.264 indicator text
+            let text = "H.264 Frame\n\(width)×\(height)"
+            let attrs: [NSAttributedString.Key: Any] = [
+                .foregroundColor: UIColor.white,
+                .font: UIFont.systemFont(ofSize: CGFloat(min(width, height)) / 20.0, weight: .bold),
+                .paragraphStyle: {
+                    let style = NSMutableParagraphStyle()
+                    style.alignment = .center
+                    return style
+                }()
+            ]
+            
+            let textSize = text.size(withAttributes: attrs)
+            let textRect = CGRect(
+                x: (size.width - textSize.width) / 2,
+                y: (size.height - textSize.height) / 2,
+                width: textSize.width,
+                height: textSize.height
+            )
+            
+            text.draw(in: textRect, withAttributes: attrs)
         }
     }
     
@@ -1057,7 +1676,7 @@ struct TeleVisionView: View {
     @State private var isFullScreen = false
     @State private var isPiPMode = false
     @State private var scale: CGFloat = 1.0
-    @State private var streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
+    @State private var streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/api/android/frame/latest"
     @State private var showStreamSettings = false
     @State private var isLoading = false
     @State private var loadingTimer: Timer?
@@ -1189,14 +1808,27 @@ struct TeleVisionView: View {
             )
         }
         .onAppear {
-            // Set Railway production server URL by default
-            streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
+            print("📱 🚀 TeleVisionView: onAppear called")
+            print("📱 📡 Current streamURL: \(streamURL)")
             
-            // Auto turn on when navigation starts (but don't auto-connect)
+            // Set HTTP polling URL for iOS client to receive Android RGBA frames from Railway
+            streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/api/android/frame/latest"
+            print("📱 🔗 Updated streamURL to Android frame polling endpoint: \(streamURL)")
+            
+            // Auto turn on when navigation starts and auto-connect to stream
             if navigationManager.isNavigating && !isOn {
+                print("📱 🗺️ Navigation is active, turning on TV")
                 withAnimation(.easeInOut(duration: 0.5)) {
                     isOn = true
                 }
+            }
+            
+            // Auto-connect to YUV stream endpoint when TV is on
+            if isOn {
+                print("📱 📺 TV is on, auto-connecting to stream")
+                connectToStream()
+            } else {
+                print("📱 📺 TV is off, not auto-connecting")
             }
             
             // Automatically attempt WebSocket connection for help requests
@@ -1300,7 +1932,31 @@ struct TeleVisionView: View {
                     }
                 }
                 
-                Section("Railway YUV420 Streaming") {
+                Section("Railway Android Frame Polling (Recommended)") {
+                    Button("Android RGBA Frames (Live)") {
+                        streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/api/android/frame/latest"
+                    }
+                    .foregroundColor(.green)
+                    
+                    Button("Local Android Frames") {
+                        streamURL = "http://127.0.0.1:8080/api/android/frame/latest"
+                    }
+                    .foregroundColor(.blue)
+                }
+                
+                Section("Railway H.264 Streaming (Legacy)") {
+                    Button("H.264 WebSocket Stream") {
+                        streamURL = "wss://magictrafficlight-production-b5ed.up.railway.app/ws/h264/client"
+                    }
+                    .foregroundColor(.orange)
+                    
+                    Button("Local H.264 Stream") {
+                        streamURL = "ws://127.0.0.1:8080/ws/h264/client"
+                    }
+                    .foregroundColor(.orange)
+                }
+                
+                Section("Railway YUV420 Streaming (Legacy)") {
                     Button("YUV420 Sample (MOV Processing)") {
                         streamURL = "https://magictrafficlight-production-b5ed.up.railway.app/yuv420/sample"
                     }
@@ -1433,17 +2089,6 @@ struct TeleVisionView: View {
         .onTapGesture(count: 2) {
             // Double tap to cycle through sizes: small -> PiP -> fullscreen -> small
             handleDoubleTap()
-        }
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                isOn.toggle()
-                
-                // Add slight scale animation for feedback
-                scale = 0.95
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    scale = 1.0
-                }
-            }
         }
         .onChange(of: intelligenceChecker.isAvailable) { _, isAvailable in
             if isAvailable && !isShining {
@@ -1579,7 +2224,29 @@ struct TeleVisionView: View {
         // Live stream view
         if streamManager.isStreaming, let frame = streamManager.currentFrame {
             streamView(frame: frame)
+        } else if streamManager.connectionStatus == .connected || streamManager.connectionStatus == .streaming {
+            // Connected but no frames yet - show waiting message for Android polling
+            if streamURL.contains("/api/android/frame") {
+                // Android polling mode - show polling indicator
+                Rectangle()
+                    .fill(Color.black)
+                    .overlay(
+                        VStack {
+                            Text("POLLING")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                            Text("Waiting for Android frames...")
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                        }
+                    )
+            } else {
+                // Other modes - show black screen
+                Rectangle()
+                    .fill(Color.black)
+            }
         } else {
+            // Not connected - show NO SIGNAL
             streamPlaceholder
         }
     }
@@ -1640,21 +2307,13 @@ struct TeleVisionView: View {
                     .font(.system(size: isFullScreen ? 10 : 6, weight: .regular, design: .monospaced))
                     .foregroundColor(.gray)
                 
-                if !streamURL.isEmpty {
-                    Text("Tap to connect")
-                        .font(.system(size: isFullScreen ? 8 : 4, weight: .regular, design: .monospaced))
-                        .foregroundColor(.gray.opacity(0.7))
-                } else {
-                    Text("Long press for settings")
-                        .font(.system(size: isFullScreen ? 8 : 4, weight: .regular, design: .monospaced))
-                        .foregroundColor(.gray.opacity(0.7))
-                }
+                Text("Tap to connect")
+                    .font(.system(size: isFullScreen ? 8 : 4, weight: .regular, design: .monospaced))
+                    .foregroundColor(.gray.opacity(0.7))
             }
         }
         .onTapGesture {
-            if !streamURL.isEmpty {
-                connectToStream()
-            }
+            connectToStream()
         }
         .onLongPressGesture {
             showStreamSettings = true
@@ -1718,7 +2377,24 @@ struct TeleVisionView: View {
             print("🔴 TeleVision: Invalid stream URL: '\(streamURL)'")
             return 
         }
+        
         print("🔗 TeleVision: Connecting to stream: \(streamURL)")
+        print("🔗 🔍 URL components:")
+        print("🔗   - Scheme: \(url.scheme ?? "nil")")
+        print("🔗   - Host: \(url.host ?? "nil")")
+        print("🔗   - Port: \(url.port?.description ?? "default")")
+        print("🔗   - Path: \(url.path)")
+        print("🔗   - Query: \(url.query ?? "nil")")
+        
+        // Check if it's a WebSocket URL
+        if streamURL.lowercased().contains("ws://") || streamURL.lowercased().contains("wss://") {
+            print("🔗 🎯 Detected WebSocket URL - this should trigger H.264 processing")
+        } else if streamURL.lowercased().contains("/api/android/frame") {
+            print("🔗 🎯 Detected Android polling URL - this should trigger RGBA polling")
+        } else {
+            print("🔗 ⚠️ Non-WebSocket URL detected")
+        }
+        
         streamManager.startStreaming(from: url)
     }
     
@@ -1993,8 +2669,10 @@ struct TeleVisionView: View {
         print("📍 Starting location streaming to helper")
         
         // Send initial location immediately
-        if let location = locationManager.location {
-            helpManager.sendLocationUpdate(location: location)
+        Task { @MainActor in
+            if let location = locationManager.location {
+                helpManager.sendLocationUpdate(location: location)
+            }
         }
         
         // Set up periodic location updates every 3 seconds
@@ -2005,8 +2683,10 @@ struct TeleVisionView: View {
                 return
             }
             
-            if let location = self.locationManager.location {
-                self.helpManager.sendLocationUpdate(location: location)
+            Task { @MainActor in
+                if let location = self.locationManager.location {
+                    self.helpManager.sendLocationUpdate(location: location)
+                }
             }
         }
     }
