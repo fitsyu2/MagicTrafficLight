@@ -66,6 +66,16 @@ struct SearchView: View {
                 stopListening()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetSearchText"))) { notification in
+            // Handle deep link search text setting
+            if let userInfo = notification.userInfo,
+               let searchTextValue = userInfo["searchText"] as? String {
+                searchText = searchTextValue
+                isSearchFocused = true
+                // Automatically search for the provided text
+                navigationManager.searchForPlaces(query: searchTextValue)
+            }
+        }
     }
     
     private var searchBar: some View {

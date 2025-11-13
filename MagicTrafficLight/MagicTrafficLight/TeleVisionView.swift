@@ -7,6 +7,8 @@
 
 import SwiftUI
 import Foundation
+import AVFoundation
+import AVKit
 
 #if os(iOS)
 import UIKit
@@ -1714,6 +1716,10 @@ struct TeleVisionView: View {
     @State private var feedbackTimer: Timer?
     @State private var locationStreamingTimer: Timer?
     
+    // Video playback states
+    @State private var isPlayingVideo = false
+    @State private var videoPlayer: AVPlayer?
+    
     // 16:9 aspect ratio dimensions
     private var tvWidth: CGFloat {
         if isFullScreen {
@@ -1843,10 +1849,10 @@ struct TeleVisionView: View {
                 }
             }
             
-            // Auto-connect to YUV stream endpoint when TV is on
+            // Auto-connect to stream endpoint when TV is on (DISABLED)
             if isOn {
-                print("📱 📺 TV is on, auto-connecting to stream")
-                connectToStream()
+                print("📱 📺 TV is on, but auto-connect is disabled")
+                // nop() // Disabled automatic connection
             } else {
                 print("📱 📺 TV is off, not auto-connecting")
             }
@@ -1912,6 +1918,7 @@ struct TeleVisionView: View {
             streamManager.stopStreaming()
             helpManager.disconnect()
             stopLocationStreaming()
+            stopVideo() // Also stop any video playback
         }
     }
     
@@ -2241,8 +2248,12 @@ struct TeleVisionView: View {
     
     @ViewBuilder
     private var screenContent: some View {
+        // Video playback view
+        if isPlayingVideo, let player = videoPlayer {
+            videoPlayerView(player: player)
+        }
         // Live stream view
-        if streamManager.isStreaming, let frame = streamManager.currentFrame {
+        else if streamManager.isStreaming, let frame = streamManager.currentFrame {
             streamView(frame: frame)
         } else if streamManager.connectionStatus == .connected || streamManager.connectionStatus == .streaming {
             // Connected but no frames yet - show waiting message for Android polling
@@ -2255,7 +2266,7 @@ struct TeleVisionView: View {
                             Text("POLLING")
                                 .font(.caption)
                                 .foregroundColor(.green)
-                            Text("Waiting for Android frames...")
+                            Text("LIVE")
                                 .font(.caption2)
                                 .foregroundColor(.gray)
                         }
@@ -2333,7 +2344,9 @@ struct TeleVisionView: View {
             }
         }
         .onTapGesture {
-            connectToStream()
+            print("TV TAPPED")
+            playLocalVideo()
+            // connectToStream() // Disabled automatic connection on tap
         }
         .onLongPressGesture {
             showStreamSettings = true
@@ -2742,6 +2755,119 @@ struct TeleVisionView: View {
             self.isRequestRejected = false
             print("Stream stopped - Ready for new request")
         }
+    }
+    
+    private func videoPlayerView(player: AVPlayer) -> some View {
+        VideoPlayerView(player: player)
+            .frame(width: isFullScreen ? UIScreen.main.bounds.width : (tvWidth - 8), 
+                   height: isFullScreen ? UIScreen.main.bounds.height : (tvHeight - 8))
+            .clipped()
+    }
+    
+    // Custom video player view without controls
+    private struct VideoPlayerView: UIViewRepresentable {
+        let player: AVPlayer
+        
+        func makeUIView(context: Context) -> PlayerView {
+            return PlayerView(player: player)
+        }
+        
+        func updateUIView(_ uiView: PlayerView, context: Context) {
+            uiView.updatePlayer(player)
+        }
+        
+        class PlayerView: UIView {
+            private var playerLayer: AVPlayerLayer!
+            
+            init(player: AVPlayer) {
+                super.init(frame: .zero)
+                setupPlayerLayer(with: player)
+            }
+            
+            required init?(coder: NSCoder) {
+                fatalError("init(coder:) has not been implemented")
+            }
+            
+            private func setupPlayerLayer(with player: AVPlayer) {
+                playerLayer = AVPlayerLayer(player: player)
+                playerLayer.videoGravity = .resizeAspectFill
+                playerLayer.backgroundColor = UIColor.black.cgColor
+                layer.addSublayer(playerLayer)
+            }
+            
+            override func layoutSubviews() {
+                super.layoutSubviews()
+                playerLayer.frame = bounds
+                print("📹 PlayerView layoutSubviews: frame = \(bounds)")
+            }
+            
+            func updatePlayer(_ player: AVPlayer) {
+                playerLayer.player = player
+            }
+        }
+    }
+    
+    private func playLocalVideo() {
+        // Stop any existing stream or video
+        streamManager.stopStreaming()
+        stopVideo()
+        
+        // Use the working method (Method 3: uppercase MP4)
+        guard let videoURL = Bundle.main.url(forResource: "DJI_0284_compressed", withExtension: "MP4") else {
+            print("❌ Could not find DJI_0284_compressed.MP4 in bundle")
+            // Fallback: play demo stream instead
+            startDemoStream()
+            return
+        }
+        
+        print("📹 Playing local video: \(videoURL.lastPathComponent)")
+        print("📹 Video URL: \(videoURL)")
+        print("📹 Video exists at path: \(FileManager.default.fileExists(atPath: videoURL.path))")
+        
+        // Create player with local video
+        videoPlayer = AVPlayer(url: videoURL)
+        
+        // Set video to start playing
+        isPlayingVideo = true
+        
+        // Start playing with a slight delay to ensure UI is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            self.videoPlayer?.play()
+            print("📹 ✅ Video play() called")
+            
+            // Check player status after a moment
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if let player = self.videoPlayer {
+                    print("📹 Player status: \(player.status.rawValue)")
+                    print("📹 Player rate: \(player.rate)")
+                    print("📹 Player time: \(player.currentTime().seconds)")
+                    if let item = player.currentItem {
+                        print("📹 Item status: \(item.status.rawValue)")
+                        print("📹 Item duration: \(item.duration.seconds)")
+                        print("📹 Item tracks: \(item.tracks.count)")
+                    }
+                }
+            }
+        }
+        
+        // Set up notification for when video ends
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: videoPlayer?.currentItem,
+            queue: .main
+        ) { _ in
+            self.stopVideo()
+        }
+    }
+    
+    private func stopVideo() {
+        print("📹 Stopping video playback")
+        videoPlayer?.pause()
+        videoPlayer = nil
+        isPlayingVideo = false
+        
+        // Remove notification observer
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
     }
 }
 

@@ -426,6 +426,96 @@ class NavigationManager: NSObject, ObservableObject {
         }
     }
     
+    func calculateRoute(to coordinate: CLLocationCoordinate2D) {
+        // Create MKMapItem from coordinate
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let destination = MKMapItem(placemark: placemark)
+        destination.name = "Selected Location"
+        
+        // Set the destination for the navigation manager
+        self.destination = destination
+        self.destinationCoordinate = coordinate
+        
+        // Call the existing method with MKMapItem
+        calculateRoute(to: destination)
+    }
+    
+    func calculateRoute(from userLocation: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D) {
+        // Cancel any existing route calculation
+        cancelRouteCalculation()
+        
+        // Set loading state
+        isCalculatingRoute = true
+        routeCalculationError = nil
+        
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation))
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        request.transportType = .automobile
+        request.requestsAlternateRoutes = false
+        
+        let directions = MKDirections(request: request)
+        
+        // Create destination MKMapItem and set it
+        let destinationPlacemark = MKPlacemark(coordinate: destination)
+        let destinationMapItem = MKMapItem(placemark: destinationPlacemark)
+        destinationMapItem.name = "Selected Location"
+        self.destination = destinationMapItem
+        self.destinationCoordinate = destination
+        
+        // Set up timeout timer (30 seconds)
+        routeTimeoutTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.handleRouteTimeout()
+            }
+        }
+        
+        currentRouteTask = Task {
+            do {
+                let response = try await directions.calculate()
+                
+                await MainActor.run {
+                    // Check if task was cancelled
+                    guard !Task.isCancelled else { return }
+                    
+                    self.isCalculatingRoute = false
+                    self.routeTimeoutTimer?.invalidate()
+                    self.routeTimeoutTimer = nil
+                    
+                    if let route = response.routes.first {
+                        self.currentRoute = route
+                        self.routePolyline = route.polyline
+                        self.remainingDistance = route.distance
+                        self.estimatedTimeRemaining = route.expectedTravelTime
+                        self.updateAnnotations()
+                        
+                        // Trigger showing full route with both endpoints
+                        self.shouldShowFullRoute = true
+                        
+                        self.routeCalculationError = nil
+                    } else {
+                        self.routeCalculationError = "No routes found"
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    // Check if task was cancelled
+                    guard !Task.isCancelled else { return }
+                    
+                    self.isCalculatingRoute = false
+                    self.routeTimeoutTimer?.invalidate()
+                    self.routeTimeoutTimer = nil
+                    
+                    if let mkError = error as? MKError {
+                        self.routeCalculationError = mkError.localizedDescription
+                    } else {
+                        self.routeCalculationError = error.localizedDescription
+                    }
+                }
+            }
+        }
+    }
+    
     // MARK: - Route Cancellation
     
     func cancelRouteCalculation() {

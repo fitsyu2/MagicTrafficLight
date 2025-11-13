@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import Foundation
+import Combine
 
 #if os(iOS)
 import UIKit
@@ -118,6 +119,79 @@ struct MainNavigationView: View {
             if let userInfo = notification.userInfo,
                let isFullScreen = userInfo["isFullScreen"] as? Bool {
                 isTeleVisionFullScreen = isFullScreen
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToDestination"))) { notification in
+            // Handle deep link navigation to destination
+            if let userInfo = notification.userInfo,
+               let destination = userInfo["destination"] as? String {
+                // Open search and immediately search for the destination
+                showingSearch = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    navigationManager.searchForPlaces(query: destination)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenSearchWithQuery"))) { notification in
+            // Handle deep link search with predefined query
+            if let userInfo = notification.userInfo,
+               let searchQuery = userInfo["query"] as? String {
+                // Open search and set the search text
+                showingSearch = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // The SearchView should handle pre-filling the search text
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("SetSearchText"),
+                        object: nil,
+                        userInfo: ["searchText": searchQuery]
+                    )
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenRoutePreview"))) { notification in
+            print("📱 MainNavigationView received OpenRoutePreview notification")
+            
+            // Handle deep link route preview with coordinates
+            if let userInfo = notification.userInfo,
+               let latitude = userInfo["latitude"] as? Double,
+               let longitude = userInfo["longitude"] as? Double {
+                
+                print("📍 Received coordinates: lat=\(latitude), lng=\(longitude)")
+                
+                // Create destination from coordinates
+                let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                let placemark = MKPlacemark(coordinate: coordinate)
+                let destination = MKMapItem(placemark: placemark)
+                destination.name = "Selected Location" // Give it a default name
+                
+                print("🎯 Setting destination: \(destination)")
+                
+                // Set the destination and calculate route
+                navigationManager.destination = destination
+                
+                // Get user location and calculate route if available
+                if let userLocation = locationManager.location {
+                    print("📍 User location available: \(userLocation), calculating route...")
+                    navigationManager.calculateRoute(from: userLocation.coordinate, to: coordinate)
+                }
+                else {
+                    print("📍 No user location yet, requesting location updates...")
+                    // If no user location yet, trigger location update first
+                    locationManager.startLocationUpdates()
+                    
+                    // Set up a one-time observer for when location becomes available
+                    let cancellable = locationManager.$location
+                        .compactMap { $0 }
+                        .first()
+                        .sink { userLocation in
+                            print("📍 User location obtained: \(userLocation), calculating route...")
+                            navigationManager.calculateRoute(from: userLocation!.coordinate, to: coordinate)
+                        }
+                    
+                    // The cancellable will automatically clean up after the first emission
+                }
+            } else {
+                print("❌ Failed to extract latitude/longitude from notification userInfo")
             }
         }
     }
