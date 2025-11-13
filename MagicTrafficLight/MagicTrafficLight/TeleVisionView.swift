@@ -2144,7 +2144,37 @@ struct TeleVisionView: View {
             
             // Screen Content - fullscreen
             if isOn {
-                if streamManager.isStreaming, let frame = streamManager.currentFrame {
+                // Video playback view in fullscreen
+                if isPlayingVideo, let player = videoPlayer {
+                    videoPlayerView(player: player)
+                        .ignoresSafeArea()
+                        .overlay(
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Circle()
+                                        .fill(Color.green)
+                                        .frame(width: 8, height: 8)
+                                    
+                                    Text("VIDEO")
+                                        .font(.system(size: 14, weight: .regular, design: .monospaced))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    Text("PLAYING")
+                                        .font(.system(size: 14, weight: .regular, design: .monospaced))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(6)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .padding(12)
+                            }
+                        )
+                }
+                // Live stream in fullscreen
+                else if streamManager.isStreaming, let frame = streamManager.currentFrame {
                     // Live stream in fullscreen
                     Image(uiImage: frame)
                         .resizable()
@@ -2798,7 +2828,6 @@ struct TeleVisionView: View {
             override func layoutSubviews() {
                 super.layoutSubviews()
                 playerLayer.frame = bounds
-                print("📹 PlayerView layoutSubviews: frame = \(bounds)")
             }
             
             func updatePlayer(_ player: AVPlayer) {
@@ -2814,15 +2843,10 @@ struct TeleVisionView: View {
         
         // Use the working method (Method 3: uppercase MP4)
         guard let videoURL = Bundle.main.url(forResource: "DJI_0284_compressed", withExtension: "MP4") else {
-            print("❌ Could not find DJI_0284_compressed.MP4 in bundle")
             // Fallback: play demo stream instead
             startDemoStream()
             return
         }
-        
-        print("📹 Playing local video: \(videoURL.lastPathComponent)")
-        print("📹 Video URL: \(videoURL)")
-        print("📹 Video exists at path: \(FileManager.default.fileExists(atPath: videoURL.path))")
         
         // Create player with local video
         videoPlayer = AVPlayer(url: videoURL)
@@ -2833,18 +2857,12 @@ struct TeleVisionView: View {
         // Start playing with a slight delay to ensure UI is ready
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.videoPlayer?.play()
-            print("📹 ✅ Video play() called")
             
             // Check player status after a moment
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 if let player = self.videoPlayer {
-                    print("📹 Player status: \(player.status.rawValue)")
-                    print("📹 Player rate: \(player.rate)")
-                    print("📹 Player time: \(player.currentTime().seconds)")
                     if let item = player.currentItem {
-                        print("📹 Item status: \(item.status.rawValue)")
-                        print("📹 Item duration: \(item.duration.seconds)")
-                        print("📹 Item tracks: \(item.tracks.count)")
+                        // Silent status check - no logging
                     }
                 }
             }
@@ -2861,7 +2879,6 @@ struct TeleVisionView: View {
     }
     
     private func stopVideo() {
-        print("📹 Stopping video playback")
         videoPlayer?.pause()
         videoPlayer = nil
         isPlayingVideo = false
